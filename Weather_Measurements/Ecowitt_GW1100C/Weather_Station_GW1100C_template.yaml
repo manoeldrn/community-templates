@@ -1,0 +1,484 @@
+zabbix_export:
+  version: '7.2'
+  template_groups:
+    - uuid: 3dcd5bbe90534f9e8eb5c2d53756af63
+      name: 'Templates/Weather Station Data'
+  templates:
+    - uuid: 4bbb5fd140344b7caaa0fb26d0507589
+      template: 'Weather Station Data GW1100C'
+      name: 'Weather Station Data GW1100C'
+      description: |
+        Template para monitorar dados de estações meteorológicas com adaptador GW1100C.
+        
+        Desenvolvido por Manoel Douglas Rufino Filho.
+      groups:
+        - name: 'Templates/Weather Station Data'
+      items:
+        - uuid: bc2594426cf64fe987b717cab1155a48
+          name: 'Saúde da Bateria'
+          type: DEPENDENT
+          key: weather.battery_health
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.rain[?(@.id == "0x13")].battery'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+          triggers:
+            - uuid: ''
+              expression: 'last(/Weather Station Data GW1100C/weather.battery_health)=1'
+              name: 'Bateria Fraca'
+              event_name: 'Bateria da estação meteorológica está fraca.'
+              priority: AVERAGE
+        - uuid: 42c526d3f383465496bbfeff39f98b0a
+          name: 'Ponto de Orvalho'
+          type: DEPENDENT
+          key: weather.dew_point
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x03")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 955f0989372c4f9d82ad364b09f5efea
+          name: Heap
+          type: DEPENDENT
+          key: weather.heap
+          history: 1w
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.debug[0].heap'
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: d47527c3a76a457bab3d4d860ea76bb8
+          name: 'Humidade Interna'
+          type: DEPENDENT
+          key: weather.humidade_interna
+          history: 1w
+          value_type: FLOAT
+          trends: 3650d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.wh25[0].inhumi'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 67f7b539831444ce8381ff26fd1a871b
+          name: 'Humidade Externa'
+          type: DEPENDENT
+          key: weather.humidity_external
+          history: 1w
+          value_type: FLOAT
+          trends: 3650d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x07")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+          triggers:
+            - uuid: 476f721833814056a4b7f6ff36362c98
+              expression: 'last(/Weather Station Data GW1100C/weather.humidity_external)>85'
+              name: 'Umidade Externa Excessiva'
+              priority: AVERAGE
+        - uuid: a2106c1020d24aa289031639eeded534
+          name: 'É CNIP?'
+          type: DEPENDENT
+          key: weather.is_cnip
+          history: 1w
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.debug[0].is_cnip'
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 77b6f37196b544d8a5380ebd14e8d27a
+          name: 'Velocidade Máxima das Rajadas de Vento'
+          type: DEPENDENT
+          key: weather.max_wind_gust
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x19")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 0d9cc17d39cd413996517bf9c782d091
+          name: 'Pressão Atmosférica Absoluta'
+          type: DEPENDENT
+          key: weather.pressure_abs
+          history: 1w
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.wh25[0].abs'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+          triggers:
+            - uuid: 2197ea1fc89543848f9e56a06d66bd46
+              expression: 'last(/Weather Station Data GW1100C/weather.pressure_abs)<950 or last(/Weather Station Data GW1100C/weather.pressure_abs)>1050'
+              name: 'Pressão Atmosférica Fora da Faixa Normal'
+              priority: HIGH
+        - uuid: 26f2478f5655498fbcedc46c6f0eb5f1
+          name: 'Pressão Relativa'
+          type: DEPENDENT
+          key: weather.pressure_rel
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.wh25[0].rel'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 787d0871c0684c56b3afa701a46ba210
+          name: 'Chuva Atual'
+          type: DEPENDENT
+          key: weather.rain_current
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.rain[?(@.id == "0x0D")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 567e722ad3c9430fb78e0edbbaff979d
+          name: 'Chuva Diária'
+          type: DEPENDENT
+          key: weather.rain_daily
+          history: 1w
+          value_type: FLOAT
+          trends: 3650d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.rain[?(@.id == "0x10")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+          triggers:
+            - uuid: 89d6e40493ff4d9bb616de2cdfd30ae7
+              expression: 'last(/Weather Station Data GW1100C/weather.rain_daily)>100'
+              name: 'Chuva Diária Intensa Detectada'
+              priority: HIGH
+        - uuid: 38467b71a2404729aa0548e1f522740d
+          name: 'Chuva por Hora'
+          type: DEPENDENT
+          key: weather.rain_hourly
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.rain[?(@.id == "0x0E")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 4c870b694cb14ad0a47f7292cb5efdd2
+          name: 'Chuva Mensal'
+          type: DEPENDENT
+          key: weather.rain_monthly
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.rain[?(@.id == "0x12")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: e469d3575db940ca84d5d24fedac837f
+          name: 'Chuva Semanal'
+          type: DEPENDENT
+          key: weather.rain_weekly
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.rain[?(@.id == "0x11")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 24a06550360144e583079cdb4c06aa02
+          name: 'Chuva Anual'
+          type: DEPENDENT
+          key: weather.rain_year
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.rain[?(@.id == "0x13")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 1161550633204f46bc44fba35870fed2
+          name: Runtime
+          type: DEPENDENT
+          key: weather.runtime
+          history: 1w
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.debug[0].runtime'
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: f0a74d682bfc4ccbb5f486cdaf00f8ea
+          name: 'Irradiação Solar'
+          type: DEPENDENT
+          key: weather.solar_radiation
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x15")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+          triggers:
+            - uuid: 2f9aae3d1bc34e90b4a7a27a15d12ad5
+              expression: 'last(/Weather Station Data GW1100C/weather.solar_radiation)>1000'
+              name: 'Radiação Solar Intensa'
+              priority: HIGH
+        - uuid: 660fb4a1d1e545b1857161e5cde7352e
+          name: 'Temperatura Externa'
+          type: DEPENDENT
+          key: weather.temp_external
+          history: 1w
+          value_type: FLOAT
+          trends: 3650d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x02")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+          triggers:
+            - uuid: ba1d3474e9714cfda12407942ff018f1
+              expression: 'last(/Weather Station Data GW1100C/weather.temp_external)>38'
+              name: 'Temperatura Externa Crítica'
+              event_name: 'Temperatura Externa Muito Alta'
+              priority: HIGH
+        - uuid: adac7685574d412eaf5863b5c38b6f6b
+          name: 'Temperatura Interna'
+          type: DEPENDENT
+          key: weather.temp_interna
+          history: 1w
+          value_type: FLOAT
+          trends: 3650d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.wh25[0].intemp'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 776b18bf90bc46b1bd328666bd879851
+          name: 'Sensação Térmica'
+          type: DEPENDENT
+          key: weather.thermal_sensation
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "4")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: 139fe43b88104347b5fc5f9f0338d494
+          name: 'Intervalo do Usuário'
+          type: DEPENDENT
+          key: weather.usr_interval
+          history: 1w
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.debug[0].usr_interval'
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: d92717acf9774640881324162f8cb24e
+          name: 'Índice UV'
+          type: DEPENDENT
+          key: weather.uv_index
+          history: 1w
+          trends: 3650d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x17")].val'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+          triggers:
+            - uuid: 66a7e02d2f104e77a07c15f30625f6c7
+              expression: 'last(/Weather Station Data GW1100C/weather.uv_index)>=6'
+              name: 'Índice UV Alto'
+              event_name: 'Índice UV atingiu nível alto ({ITEM.VALUE}). Evite exposição prolongada.'
+              priority: HIGH
+            - uuid: 7ba0c1137e334d6d89bee7c503a222e6
+              expression: 'last(/Weather Station Data GW1100C/weather.uv_index)>=9'
+              name: 'Índice UV Extremo'
+              event_name: 'Índice UV atingiu nível extremo ({ITEM.VALUE}). Risco grave de danos à pele.'
+              priority: DISASTER
+            - uuid: 8f6856bb295043e7b76ce947982261c9
+              expression: 'last(/Weather Station Data GW1100C/weather.uv_index)>=3'
+              name: 'Índice UV Moderado'
+              event_name: 'Índice UV atingiu nível moderado ({ITEM.VALUE}). Proteção solar recomendada.'
+              priority: WARNING
+        - uuid: a18d0332e596483887c506c7b28609d9
+          name: 'Direção do Vento'
+          type: DEPENDENT
+          key: weather.wind_direction
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x0A")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: dc221eebcf0e4233952032a151158428
+          name: 'Velocidade das Rajadas de Vento'
+          type: DEPENDENT
+          key: weather.wind_gust_speed
+          history: 1w
+          value_type: FLOAT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x0C")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+        - uuid: ae14d3bfa05e4209aaea477399c6966c
+          name: 'Velocidade do Vento'
+          type: DEPENDENT
+          key: weather.wind_speed
+          history: 1w
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.common_list[?(@.id == "0x0B")].val'
+            - type: REGEX
+              parameters:
+                - '(-?\d+\.?\d*)'
+                - \1
+          master_item:
+            key: 'web.page.get[livedata_info]'
+          triggers:
+            - uuid: f6290648f6614589a24a6e36c35466e7
+              expression: 'last(/Weather Station Data GW1100C/weather.wind_speed)>50'
+              name: 'Velocidade do Vento Extremamente Alta'
+              event_name: 'Velocidade do Vento Extremamente Alta'
+        - uuid: c6d8bfb002ae4df08b0aedc9511cb7f3
+          name: 'Device JSON Data GW1100C'
+          type: HTTP_AGENT
+          key: 'web.page.get[livedata_info]'
+          history: 1w
+          value_type: TEXT
+          timeout: 15s
+          url: 'http://{HOST.CONN}/get_livedata_info'
+      tags:
+        - tag: class
+          value: hardware
+        - tag: target
+          value: weather_station
